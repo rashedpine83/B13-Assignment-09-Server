@@ -1,7 +1,7 @@
 express = require("express");
 const app = express();
 cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const dotenv = require("dotenv");
 dotenv.config();
@@ -27,6 +27,7 @@ async function run() {
     await client.connect();
     db = client.db("tutorflow");
     const tutorCollection = db.collection("tutors");
+    const bookingCollection = db.collection("bookings");
 
     app.post("/tutors", async (req, res) => {
       const newTutor = req.body;
@@ -34,10 +35,59 @@ async function run() {
       res.send(result);
     });
 
+    // app.get("/tutors", async (req, res) => {
+    //   const cursor = tutorCollection.find();
+    //   const result = await cursor.toArray();
+    //   res.send(result);
+    // });
+
     app.get("/tutors", async (req, res) => {
       const result = await tutorCollection.find().toArray();
       res.send(result);
     });
+
+    app.get("/tutors/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await tutorCollection.findOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
+    app.post("/bookings", async (req, res) => {
+      const newBooking = req.body;
+      const result = await bookingCollection.insertOne(newBooking);
+      res.send(result);
+    });
+
+    app.get("/booking/:userId", async (req, res) => {
+      const { userId } = req.params;
+      const result = await bookingCollection.find({ userId: userId }).toArray();
+      res.send(result);
+    });
+
+    app.delete("/tutors/:id", async (req, res) => {
+      const { id } = req.params;
+
+      const result = await tutorCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(result);
+    });
+
+    // app.patch("/booking/:id", async (req, res) => {
+    //   const { id } = req.params;
+    //   const filter = {
+    //     _id: new ObjectId(id),
+    //   };
+    //   const modifyUser = req.body;
+    //   const updateDoc = {
+    //     $set: {
+    //       status: modifyUser.status,
+    //       cancel: modifyUser.cancel,
+    //     },
+    //   };
+    //   const result = await bookingCollection.updateOne(filter, updateDoc);
+    //   res.send(result);
+    // });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
