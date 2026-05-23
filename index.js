@@ -20,7 +20,9 @@ const client = new MongoClient(uri, {
   },
 });
 
-const JWKS = createRemoteJWKSet(new URL(`http://localhost:3000/api/auth/jwks`));
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
+);
 
 const verifyToken = async (req, res, next) => {
   const authHeader = req?.headers?.authorization;
@@ -43,13 +45,14 @@ const verifyToken = async (req, res, next) => {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
+
     db = client.db("tutorflow");
     const tutorCollection = db.collection("tutors");
     const newTutorCollection = db.collection("newTutors");
     const bookingCollection = db.collection("bookings");
 
-    app.post("/tutors", async (req, res) => {
+    app.post("/tutors", verifyToken, async (req, res) => {
       try {
         const newTutor = req.body;
 
@@ -101,7 +104,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("/newTutors/:id", async (req, res) => {
+    app.delete("/newTutors/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
       const result = await newTutorCollection.deleteOne({
@@ -111,7 +114,7 @@ async function run() {
       res.send(result);
     });
 
-    app.delete("/tutors/:id", async (req, res) => {
+    app.delete("/tutors/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
 
       const result = await tutorCollection.deleteOne({
@@ -121,7 +124,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/booking/:id", async (req, res) => {
+    app.patch("/booking/:id", verifyToken, async (req, res) => {
       const { id } = req.params;
       const { status } = req.body;
 
@@ -135,7 +138,7 @@ async function run() {
       res.send(result);
     });
 
-    app.patch("/tutors/:id", async (req, res) => {
+    app.patch("/tutors/:id", verifyToken, async (req, res) => {
       try {
         const { id } = req.params;
 
@@ -283,7 +286,7 @@ async function run() {
 
     // Search tutors api end
 
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
